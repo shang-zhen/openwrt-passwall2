@@ -236,9 +236,11 @@ if has_singbox then
 	o = s:option(Flag, "sniff_override_destination", translate("Override the connection destination address"), translate("Override the connection destination address with the sniffed domain."))
 	o.default = 1
 	o.rmempty = false
+
 	-- 自改
 	o = s:option(ListValue, "domain_strategy", translate("domain strategy"), translate("If the option `sniff_override_destination` is selected, routing will be based on the IP address; otherwise, it will not enter IP routing and will instead use the domain name. The optional values are: `prefer_ipv4`, `prefer_ipv6`, `ipv4_only`, and `ipv6_only`. If set, the requested domain name will be resolved to an IP address before routing. If `sniff_override_destination` is effective, its value will serve as a fallback."))
 	o.default = "ipv4_only"
+	o:value("", "")
 	o:value("prefer_ipv4", "prefer_ipv4")
 	o:value("prefer_ipv6", "prefer_ipv6")
 	o:value("ipv4_only", "ipv4_only")
