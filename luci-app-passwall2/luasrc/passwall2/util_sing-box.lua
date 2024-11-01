@@ -770,6 +770,7 @@ function gen_config(var)
 	local remote_dns_fake = var["-remote_dns_fake"]
 	local dns_cache = var["-dns_cache"]
 	local tags = var["-tags"]
+	-- 自改
 	local dns_address = var["-dns_address"]
 	local dns_port = var["-dns_port"]
 
@@ -1439,7 +1440,7 @@ function gen_config(var)
 	if singbox_settings.domain_strategy and singbox_settings.domain_strategy ~= "" then
 		for _, inbound in ipairs(inbounds) do
 			if inbound.tag ~= "dns-in" then
-				inbound.domain_strategy=singbox_settings.domain_strategy
+				inbound.domain_strategy = singbox_settings.domain_strategy
 			end
 		end
 	end

@@ -318,6 +318,7 @@ run_xray() {
 		DIRECT_DNS_UDP_SERVER=${_dns_address}
 		DIRECT_DNS_UDP_PORT=${_dns_port}
 
+    #自改
     # 添加 dns_address 和 dns_port
     _extra_param="${_extra_param} -dns_address ${_dns_address} -dns_port ${_dns_port}"
 
@@ -433,6 +434,7 @@ run_singbox() {
 		DIRECT_DNS_UDP_SERVER=${_dns_address}
 		DIRECT_DNS_UDP_PORT=${_dns_port}
 
+    #自改
     # 添加 dns_address 和 dns_port
     _extra_param="${_extra_param} -dns_address ${_dns_address} -dns_port ${_dns_port}"
 		[ "${write_ipset_direct}" = "1" ] && {

@@ -580,6 +580,7 @@ function gen_config(var)
 	local remote_dns_query_strategy = var["-remote_dns_query_strategy"]
 	local remote_dns_detour = var["-remote_dns_detour"]
 	local dns_cache = var["-dns_cache"]
+	-- 自改
 	local dns_address = var["-dns_address"]
 	local dns_port = var["-dns_port"]
 
