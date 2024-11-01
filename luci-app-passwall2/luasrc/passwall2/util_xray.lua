@@ -580,6 +580,8 @@ function gen_config(var)
 	local remote_dns_query_strategy = var["-remote_dns_query_strategy"]
 	local remote_dns_detour = var["-remote_dns_detour"]
 	local dns_cache = var["-dns_cache"]
+	local dns_address = var["-dns_address"]
+	local dns_port = var["-dns_port"]
 
 	local dns_domain_rules = {}
 	local dns = nil
@@ -1360,7 +1362,73 @@ function gen_config(var)
 				end
 			end
 		end
-	
+
+		-- 添加自定义规则
+		-- 替换占位符
+		function rep_port_address(str, values)
+			str = string.gsub(str, "{direct_port}", tostring(values.direct_port))
+			str = string.gsub(str, "{remote_port}", tostring(values.remote_port))
+			str = string.gsub(str, "{direct_addr}", values.direct_addr or "")
+			str = string.gsub(str, "{remote_addr}", values.remote_addr or "")
+			str = string.gsub(str, "{ipset_port}", values.ipset_port or "")
+			str = string.gsub(str, "{ipset_addr}", values.ipset_addr or "")
+			return str
+		end
+		-- 处理 DNS 规则
+		-- option dns_rules '[{"port":{direct_port},"address":"{direct_addr}","queryStrategy":"UseIPv4","_flag":"direct"},{"port":{remote_port},"address":"{remote_addr}","domains":["geosite:gfw"],"skipFallback":true,"_flag":"remote"}]'
+		local global_settings = uci:get_all(appname, "@global[0]") or {}
+		local write_ipset_direct = global_settings.write_ipset_direct
+		local custom_rules = xray_settings.dns_rules
+		if custom_rules and custom_rules ~= "" then
+			custom_rules = rep_port_address(custom_rules, {
+				direct_port = tonumber(dns_port) or 53,
+				direct_addr = dns_address or "",
+				remote_port = tonumber(_remote_dns.port) or 53,
+				remote_addr = _remote_dns.address or ""
+			})
+			local ok, parsed = pcall(jsonc.parse, custom_rules)
+			if ok and parsed then
+				dns.servers = api.clone(parsed)
+				if remote_dns_fake then
+					-- 查找设值的dns中的远程dns元素,然后设置为对应的domains
+					local remote_index = nil
+					local remote_domains = nil
+					for index, rule in ipairs(parsed) do
+						if rule._flag == "remote" then
+							remote_index = index
+							remote_domains = rule.domains
+							break
+						end
+					end
+					if remote_domains then
+						_remote_fakedns.domains = remote_domains
+					end
+
+					if remote_index then
+						table.insert(dns.servers, remote_index, _remote_fakedns)
+					else
+						table.insert(dns.servers, 2, _remote_fakedns)
+					end
+				end
+			else
+				print("Failed to parse DNS rules:", custom_rules)
+			end
+			-- 直连 DNS 解析结果写入到 IPSet
+			local custom_dns_ipset_rules = xray_settings.dns_ipset_rules
+			if write_ipset_direct == "1" and custom_dns_ipset_rules and custom_dns_ipset_rules ~= "" then
+				custom_dns_ipset_rules = rep_port_address(custom_dns_ipset_rules, {
+					ipset_port = tonumber(direct_dns_udp_port) or 53,
+					ipset_addr = direct_dns_udp_server or ""
+				})
+				local ok1, parsed1 = pcall(jsonc.parse, custom_dns_ipset_rules)
+				if ok1 and parsed1 then
+					table.insert(dns.servers, 2, parsed1)
+				else
+					print("Failed to parse custom_dns_ipset_rules:", custom_dns_ipset_rules)
+				end
+			end
+		end
+
 		local default_rule_index = #routing.rules > 0 and #routing.rules or 1
 		for index, value in ipairs(routing.rules) do
 			if value["_flag"] == "default" then
